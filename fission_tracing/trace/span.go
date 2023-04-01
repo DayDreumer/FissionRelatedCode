@@ -4,7 +4,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DayDreumer/FissionRelatedCode/fission_tracing/trace"
+	"fission.tracing/trace"
 )
 
 type contextKeyType int
