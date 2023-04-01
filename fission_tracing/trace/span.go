@@ -3,6 +3,8 @@ package trace
 import (
 	"sync"
 	"time"
+
+	"github.com/DayDreumer/FissionRelatedCode/fission_tracing/trace"
 )
 
 type contextKeyType int
@@ -18,6 +20,14 @@ type SpanContext struct {
 	spanID         SpanID
 	parentSpanID   SpanID // optional
 	remotelyCalled bool
+}
+
+func (sc *SpanContext) init(parentSpanID SpanID) {
+	if parentSpanID != (SpanID{}) {
+		sc.parentSpanID = parentSpanID
+	}
+	ig := trace.RandomGenerator{}
+
 }
 
 type CommonSpan struct {
@@ -39,4 +49,11 @@ type CommonSpan struct {
 	spanContext SpanContext
 
 	tracer *tracer
+}
+
+func (cs *CommonSpan) initSpanContext(parentSpanID SpanID) {
+	if parentSpanID != (SpanID{}) {
+		cs.spanContext.parentSpanID = parentSpanID
+	}
+
 }
