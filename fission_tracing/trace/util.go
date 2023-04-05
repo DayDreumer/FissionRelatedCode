@@ -8,7 +8,7 @@ import (
 	"math/rand"
 	"sync"
 
-	"fission.tracing/trace"
+	"github.com/DayDreumer/FissionRelatedCode/tree/main/fission_tracing/trace"
 )
 
 func TraceidToString(traceID trace.TraceID) string {
