@@ -7,17 +7,15 @@ import (
 	"encoding/json"
 	"math/rand"
 	"sync"
-
-	"github.com/DayDreumer/FissionRelatedCode/tree/main/fission_tracing/trace"
 )
 
-func TraceidToString(traceID trace.TraceID) string {
+func TraceidToString(traceID TraceID) string {
 	recv := make([]byte, 16)
 	recv = traceID[:]
 	return hex.EncodeToString(recv)
 }
 
-func SpanidToString(spanID trace.SpanID) string {
+func SpanidToString(spanID SpanID) string {
 	recv := make([]byte, 8)
 	recv = spanID[:]
 	return hex.EncodeToString(recv)
@@ -36,19 +34,19 @@ func NewRandomGenerator() RandomGenerator {
 	return rg
 }
 
-func (rg *RandomGenerator) generateTraceID() trace.TraceID {
-	traceID := trace.TraceID{}
+func (rg *RandomGenerator) generateTraceID() TraceID {
+	traceID := TraceID{}
 	_, _ = rg.ran.Read(traceID[:])
 	return traceID
 }
 
-func (rg *RandomGenerator) generateSpanID() trace.SpanID {
-	spanID := trace.SpanID{}
+func (rg *RandomGenerator) generateSpanID() SpanID {
+	spanID := SpanID{}
 	_, _ = rg.ran.Read(spanID[:])
 	return spanID
 }
 
-func (rg *RandomGenerator) generateID() (trace.TraceID, trace.SpanID) {
+func (rg *RandomGenerator) generateID() (TraceID, SpanID) {
 	return rg.generateTraceID(), rg.generateSpanID()
 }
 

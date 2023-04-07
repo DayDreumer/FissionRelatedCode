@@ -1,3 +1,3 @@
-module github.com/DayDreumer/FissionRelatedCode/tree/main/fission_tracing/trace
+module fission.tracing
 
 go 1.15

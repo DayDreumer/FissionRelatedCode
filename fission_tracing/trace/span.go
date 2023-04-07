@@ -3,8 +3,6 @@ package trace
 import (
 	"sync"
 	"time"
-
-	"fission.tracing/trace"
 )
 
 type contextKeyType int
@@ -26,12 +24,12 @@ func (sc *SpanContext) init(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		sc.parentSpanID = parentSpanID
 	}
-	ig := trace.RandomGenerator{}
+	ig := RandomGenerator{}
 
 }
 
 type CommonSpan struct {
-	name string
+	Operatorname string
 
 	// startTime is the time at which this span was started.
 	startTime time.Time
