@@ -8,13 +8,9 @@ import (
 	"fission.tracing/tag"
 )
 
-type contextKeyType int
-
 type TraceID [16]byte
 
 type SpanID [8]byte
-
-const spanKey contextKeyType = iota
 
 type SpanContextInfo struct {
 	TraceID        TraceID
