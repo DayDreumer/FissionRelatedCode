@@ -1,8 +1,11 @@
 package trace
 
 import (
+	"encoding/json"
 	"sync"
 	"time"
+
+	"fission.tracing/tag"
 )
 
 type contextKeyType int
@@ -13,6 +16,13 @@ type SpanID [8]byte
 
 const spanKey contextKeyType = iota
 
+type SpanContextInfo struct {
+	TraceID        TraceID
+	SpanID         SpanID
+	ParentSpanID   SpanID // optional
+	RemotelyCalled bool
+}
+
 type SpanContext struct {
 	traceID        TraceID
 	spanID         SpanID
@@ -20,12 +30,25 @@ type SpanContext struct {
 	remotelyCalled bool
 }
 
-func (sc *SpanContext) init(parentSpanID SpanID) {
+var _ json.Marshaler = SpanContext{}
+
+func (sc *SpanContext) initWithParentSpanID(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		sc.parentSpanID = parentSpanID
 	}
 	ig := RandomGenerator{}
+	sc.traceID = ig.generateTraceID()
+	sc.spanID = ig.generateSpanID()
 
+}
+
+func (sc SpanContext) MarshalJSON() ([]byte, error) {
+	return json.Marshal(SpanContextInfo{
+		TraceID:        sc.traceID,
+		SpanID:         sc.spanID,
+		ParentSpanID:   sc.parentSpanID,
+		RemotelyCalled: sc.remotelyCalled,
+	})
 }
 
 type CommonSpan struct {
@@ -40,11 +63,19 @@ type CommonSpan struct {
 	// status is the status of this span.
 	// status Status
 
-	mu sync.Mutex
+	// traceTag is used to store span tag
+	tarceTag *tag.TagDict
 
+	// spanContext is used to show relationships about childs Or followers.
+	spanContext SpanContext
+
+	// parent's SpanContext of current span.
+	parentSpanContext SpanContext
+
+	// number of current span's childs.
 	childSpanCount int
 
-	spanContext SpanContext
+	mu sync.Mutex
 
 	tracer *tracer
 }
