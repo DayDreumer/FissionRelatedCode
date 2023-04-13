@@ -6,6 +6,7 @@ type contextKeyType int
 
 const spanKey contextKeyType = iota
 
+// inherit parent context and set spanKey's value to current span.
 func InheritParentContext(ctx context.Context, currentSpan CommonSpan) context.Context {
 	return context.WithValue(ctx, spanKey, currentSpan)
 }
@@ -14,7 +15,9 @@ func InheritParentContext(ctx context.Context, currentSpan CommonSpan) context.C
 
 func GetLastSpanFromContext(ctx context.Context) CommonSpan {
 	if ctx == nil {
-		return CommonSpan{}
+		return CommonSpan{
+			Operatorname: "none",
+		}
 	}
 	if parentSpan, ok := ctx.Value(spanKey).(CommonSpan); ok {
 		return parentSpan
@@ -22,4 +25,12 @@ func GetLastSpanFromContext(ctx context.Context) CommonSpan {
 	return CommonSpan{
 		Operatorname: "none",
 	}
+}
+
+func GetLastSpanContextFromContext(ctx context.Context) SpanContext {
+	return GetLastSpanFromContext(ctx).spanContext
+}
+
+func GetInnerSpanForTest(ctx context.Context) CommonSpan {
+	return ctx.Value(spanKey).(CommonSpan)
 }
