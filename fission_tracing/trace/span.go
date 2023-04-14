@@ -140,3 +140,7 @@ func (cs *CommonSpan) SpanContext() SpanContext {
 func (cs *CommonSpan) ParentSpanContext() SpanContext {
 	return cs.parentSpanContext
 }
+
+func (cs *CommonSpan) End() {
+	cs.endTime = GetEndTime(cs.StartTime())
+}

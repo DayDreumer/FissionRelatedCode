@@ -1,9 +1,11 @@
 package trace_test
 
 import (
+	"bytes"
 	"context"
 	"reflect"
 	"testing"
+	"time"
 
 	trace "fission.tracing"
 )
@@ -41,4 +43,50 @@ func TestRootStart(t *testing.T) {
 	} else {
 		t.Logf("nextCtx's span name is right, it's called %s", trace.GetInnerSpanForTest(nextCtx).Operatorname)
 	}
+	span.End()
+	t.Logf("start time is %v, end time is  %v.", span.StartTime(), span.EndTime())
+}
+
+func TestChildStart(t *testing.T) {
+	initCtx := context.Background()
+	tr := &trace.Tracer{
+		Name: "test",
+	}
+	nextCtx, span := tr.Start("Start", initCtx)
+	childSpan := ChildDo(nextCtx)
+	time.Sleep(1 * time.Second)
+	span.End()
+	if childSpan.Operatorname != "ChildDo" {
+		t.Fatalf("child span's Operatorname is wrong.")
+	}
+	childTid, rootTid := childSpan.SpanContext().TraceID(), span.SpanContext().TraceID()
+	if !bytes.Equal(childTid[:], rootTid[:]) {
+		t.Fatalf("child's TraceID is wrong.")
+	}
+	if !childSpan.StartTime().After(span.StartTime()) || !span.EndTime().After(childSpan.EndTime()) {
+		t.Fatalf("wrong time in childSpan.")
+	} else {
+		t.Logf("span starts at %v", span.StartTime())
+		t.Logf("childSpan starts at %v", childSpan.StartTime())
+		t.Logf("childSpan ends at %v", childSpan.EndTime())
+		t.Logf("span ends at %v", span.EndTime())
+	}
+}
+
+func ChildDo(ctx context.Context, t *testing.T) trace.CommonSpan {
+	tr := &trace.Tracer{
+		Name: "test",
+	}
+	_, span := tr.Start("ChildDo", ctx)
+	t.Logf("[test]child's startTime is %v", span.StartTime())
+	/*
+		wrong use at 'defer span.End()'
+		defer logic:
+			final -> return x
+			x = span
+			span.End()
+			return x
+	*/
+	span.End()
+	return span
 }
