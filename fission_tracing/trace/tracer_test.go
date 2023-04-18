@@ -12,9 +12,7 @@ import (
 
 func TestRootStart(t *testing.T) {
 	initCtx := context.Background()
-	tr := &trace.Tracer{
-		Name: "test",
-	}
+	tr := trace.NewTracer("test")
 	nextCtx, span := tr.Start("Start", initCtx)
 	if span.Operatorname != "Start" {
 		t.Fatalf("span's Operatorname is wrong.")
@@ -45,13 +43,15 @@ func TestRootStart(t *testing.T) {
 	}
 	span.End()
 	t.Logf("start time is %v, end time is  %v.", span.StartTime(), span.EndTime())
+	sh := tr.GetSpanHandlerForTest()
+	if sh.Len() != 1 {
+		t.Fatalf("wrong number in SpanHandler, it should be 1.")
+	}
 }
 
 func TestChildStart(t *testing.T) {
 	initCtx := context.Background()
-	tr := &trace.Tracer{
-		Name: "test",
-	}
+	tr := trace.NewTracer("test1")
 	nextCtx, span := tr.Start("Start", initCtx)
 	childSpan := ChildDo(nextCtx)
 	time.Sleep(1 * time.Second)
@@ -65,20 +65,15 @@ func TestChildStart(t *testing.T) {
 	}
 	if !childSpan.StartTime().After(span.StartTime()) || !span.EndTime().After(childSpan.EndTime()) {
 		t.Fatalf("wrong time in childSpan.")
-	} else {
-		t.Logf("span starts at %v", span.StartTime())
-		t.Logf("childSpan starts at %v", childSpan.StartTime())
-		t.Logf("childSpan ends at %v", childSpan.EndTime())
-		t.Logf("span ends at %v", span.EndTime())
 	}
+	n := tr.End()
+	t.Logf("number of span is %d", n)
 }
 
-func ChildDo(ctx context.Context, t *testing.T) trace.CommonSpan {
-	tr := &trace.Tracer{
-		Name: "test",
-	}
+func ChildDo(ctx context.Context) trace.CommonSpan {
+	tr := trace.NewTracer("test2")
 	_, span := tr.Start("ChildDo", ctx)
-	t.Logf("[test]child's startTime is %v", span.StartTime())
+	// t.Logf("[test]child's startTime is %v", span.StartTime())
 	/*
 		wrong use at 'defer span.End()'
 		defer logic:

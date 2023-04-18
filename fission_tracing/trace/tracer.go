@@ -2,13 +2,47 @@ package trace
 
 import (
 	"context"
+	"sync/atomic"
 	"time"
 
 	"fission.tracing/tag"
 )
 
+var (
+	globalTracer = defaultTracer()
+)
+
 type Tracer struct {
-	Name string
+	Name        string
+	spanhandler *SpanHandler
+}
+
+func NewTracer(name string) *Tracer {
+	if globalTracer == nil {
+		return &Tracer{
+			Name:        name,
+			spanhandler: NewSpanHandler(),
+		}
+	}
+	gt := globalTracer.Load().(*Tracer)
+	if gt.Name == "none" {
+		gt.Name = name
+		globalTracer.Store(gt)
+	}
+	return gt
+}
+
+func defaultTracer() *atomic.Value {
+	v := &atomic.Value{}
+	v.Store(&Tracer{
+		Name:        "none",
+		spanhandler: NewSpanHandler(),
+	})
+	return v
+}
+
+func (tr *Tracer) GetSpanHandlerForTest() *SpanHandler {
+	return tr.spanhandler
 }
 
 // start a new span
@@ -25,6 +59,11 @@ func (tr *Tracer) Start(name string, ctx context.Context) (context.Context, Comm
 
 	newSpan := tr.getNewSpan(ctx, name)
 	return InheritParentContext(ctx, newSpan), newSpan
+}
+
+func (tr *Tracer) End() int {
+	tr.spanhandler.OnEnd()
+	return len(tr.spanhandler.spanSeq)
 }
 
 func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
@@ -58,7 +97,9 @@ func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
 		spanContext:       sc,
 		parentSpanContext: parentSC,
 		childSpanCount:    0,
+		spanHandler:       NewSpanHandler(),
 	}
+	newSpan.spanHandler = tr.spanhandler
 	return newSpan
 }
 

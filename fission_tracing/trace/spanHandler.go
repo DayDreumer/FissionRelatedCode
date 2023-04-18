@@ -10,8 +10,8 @@ type SpanHandler struct {
 	stopCh  chan struct{}
 }
 
-func NewSpanHandler() SpanHandler {
-	sp := SpanHandler{
+func NewSpanHandler() *SpanHandler {
+	sp := &SpanHandler{
 		queue:   make(chan CommonSpan, 10),
 		spanSeq: make([]CommonSpan, 0, 10),
 		stopCh:  make(chan struct{}),
@@ -40,6 +40,7 @@ func (sh *SpanHandler) HandlerJob() {
 			sh.mu.Lock()
 			//	Do Task on Span
 			sh.spanSeq = append(sh.spanSeq, s)
+			sh.mu.Unlock()
 		}
 	}
 }
@@ -52,4 +53,10 @@ func (sh *SpanHandler) Enqueue(cs CommonSpan) bool {
 	}
 	sh.queue <- cs
 	return true
+}
+
+func (sh *SpanHandler) Len() int {
+	sh.mu.Lock()
+	defer sh.mu.Unlock()
+	return len(sh.spanSeq)
 }

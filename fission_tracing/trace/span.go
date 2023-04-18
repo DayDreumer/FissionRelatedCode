@@ -113,8 +113,7 @@ type CommonSpan struct {
 	// number of current span's childs.
 	childSpanCount int
 
-	// mu sync.Mutex
-
+	spanHandler *SpanHandler
 	// tracer *Tracer
 }
 
@@ -141,6 +140,17 @@ func (cs *CommonSpan) ParentSpanContext() SpanContext {
 	return cs.parentSpanContext
 }
 
+func (cs *CommonSpan) AddTag(key tag.Key, value tag.Value) {
+	cs.traceTag.Insert(key, value)
+}
+
+// func (cs *CommonSpan) ShowTag()
+
+func (cs CommonSpan) backToTracer() {
+	cs.spanHandler.Enqueue(cs)
+}
+
 func (cs *CommonSpan) End() {
 	cs.endTime = GetEndTime(cs.StartTime())
+	cs.backToTracer()
 }
