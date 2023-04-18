@@ -1,6 +1,7 @@
 package tag
 
 import (
+	"encoding/json"
 	"math"
 	"strconv"
 )
@@ -12,6 +13,19 @@ const (
 	FLOAT64
 	STRING
 )
+
+const TYPE_LIST = "NONEBOOLINT64FLOAT64STRING"
+
+var TYPE_ARRAY = [...]int{0, 4, 8, 13, 20, 26}
+
+func ValueTypeToString(vtype int) string {
+	if vtype < 0 || vtype > 5 {
+		return "UNKNOWN"
+	}
+	return TYPE_LIST[TYPE_ARRAY[vtype]:TYPE_ARRAY[vtype+1]]
+}
+
+type NONE_TYPE struct{}
 
 type Value struct {
 	valueType   int
@@ -59,6 +73,14 @@ func (v Value) toBool() bool {
 	return v.valueNum != 0
 }
 
+func (v Value) toInt64() int64 {
+	return int64(v.valueNum)
+}
+
+func (v Value) toFloat64() float64 {
+	return math.Float64frombits(v.valueNum)
+}
+
 func (v Value) String() string {
 	switch v.Type() {
 	case BOOL:
@@ -72,4 +94,29 @@ func (v Value) String() string {
 	default:
 		return "unknown"
 	}
+}
+
+func (v Value) ToInterface() interface{} {
+	switch v.valueType {
+	case BOOL:
+		return v.toBool()
+	case INT64:
+		return v.toInt64()
+	case FLOAT64:
+		return v.toFloat64()
+	case STRING:
+		return v.String()
+	default:
+		return NONE_TYPE{}
+	}
+}
+
+func (v Value) MarshalJSON() ([]byte, error) {
+	var jsonVal struct {
+		Type  string
+		Value interface{}
+	}
+	jsonVal.Type = ValueTypeToString(v.Type())
+	jsonVal.Value = v.ToInterface()
+	return json.Marshal(jsonVal)
 }

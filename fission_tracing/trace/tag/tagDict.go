@@ -13,6 +13,11 @@ type TagDict struct {
 	tagMap map[Key]Value
 }
 
+type TagDictInfo struct {
+	Key   string
+	Value string
+}
+
 func NewTagDict() *TagDict {
 	td := &TagDict{
 		tagMap: map[Key]Value{},
@@ -31,3 +36,14 @@ func (tg *TagDict) Search(k Key) (Value, bool) {
 	}
 	return Value{}, false
 }
+
+// func (tg TagDict) MarshalJSON() ([]byte, bool) {
+// 	// keyArray := make([]string, 0)
+// 	// valueArray := make([]string, 0)
+// 	t := TagDictInfo{
+// 		Key:   "1",
+// 		Value: "2",
+// 	}
+// 	r := json.Marshal{t}
+// 	return r
+// }

@@ -29,4 +29,7 @@ func TestDict(t *testing.T) {
 	} else {
 		t.Fatalf("childs not found.")
 	}
+	// v1, _ := dict.Search("childs")
+	// b, _ := json.Marshal(v1)
+	// t.Logf("test: %s", string(b))
 }
