@@ -62,11 +62,11 @@ type SpanContext struct {
 
 var _ json.Marshaler = SpanContext{}
 
-func (sc *SpanContext) initWithParentSpanID(parentSpanID SpanID) {
+func (sc *SpanContext) InitWithParentSpanID(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		sc.parentSpanID = parentSpanID
 	}
-	ig := RandomGenerator{}
+	ig := NewRandomGenerator()
 	sc.traceID = ig.generateTraceID()
 	sc.spanID = ig.generateSpanID()
 
@@ -87,6 +87,16 @@ func (sc SpanContext) MarshalJSON() ([]byte, error) {
 		ParentSpanID:   sc.parentSpanID,
 		RemotelyCalled: sc.remotelyCalled,
 	})
+}
+
+func (sc *SpanContext) UnmarshalJSON(data []byte) error {
+	sci := SpanContextInfo{}
+	json.Unmarshal(data, &sci)
+	sc.traceID = sci.TraceID
+	sc.spanID = sci.SpanID
+	sc.parentSpanID = sci.ParentSpanID
+	sc.remotelyCalled = sci.RemotelyCalled
+	return nil
 }
 
 type CommonSpan struct {
