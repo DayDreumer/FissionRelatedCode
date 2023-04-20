@@ -10,28 +10,23 @@ func (tp TagPair) Valid() bool {
 }
 
 type TagDict struct {
-	tagMap map[Key]Value
-}
-
-type TagDictInfo struct {
-	Key   string
-	Value string
+	TagMap map[Key]Value
 }
 
 func NewTagDict() *TagDict {
 	td := &TagDict{
-		tagMap: map[Key]Value{},
+		TagMap: map[Key]Value{},
 	}
 	return td
 }
 
 func (tg *TagDict) Insert(k Key, v Value) bool {
-	tg.tagMap[k] = v
+	tg.TagMap[k] = v
 	return true
 }
 
 func (tg *TagDict) Search(k Key) (Value, bool) {
-	if v, ok := tg.tagMap[k]; ok {
+	if v, ok := tg.TagMap[k]; ok {
 		return v, true
 	}
 	return Value{}, false
