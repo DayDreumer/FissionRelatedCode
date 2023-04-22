@@ -127,6 +127,28 @@ type CommonSpan struct {
 	// tracer *Tracer
 }
 
+func NewSpan(name string) CommonSpan {
+	return CommonSpan{
+		Operatorname:   name,
+		startTime:      time.Now(),
+		traceTag:       tag.NewTagDict(),
+		childSpanCount: 0,
+		spanHandler:    NewSpanHandler(),
+	}
+}
+
+func NewSpanWithSpanContext(name string, sc SpanContext) CommonSpan {
+	cs := NewSpan(name)
+	cs.spanContext = sc
+	return cs
+}
+
+func NewSpanWithMultiContext(name string, sc SpanContext, psc SpanContext) CommonSpan {
+	cs := NewSpanWithSpanContext(name, sc)
+	cs.parentSpanContext = psc
+	return cs
+}
+
 func (cs *CommonSpan) initSpanContext(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		cs.spanContext.parentSpanID = parentSpanID
