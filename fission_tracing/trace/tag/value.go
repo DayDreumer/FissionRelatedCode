@@ -25,6 +25,21 @@ func ValueTypeToString(vtype int) string {
 	return TYPE_LIST[TYPE_ARRAY[vtype]:TYPE_ARRAY[vtype+1]]
 }
 
+func StringToValueType(valueType string) int {
+	switch valueType {
+	case "BOOL":
+		return 1
+	case "INT64":
+		return 2
+	case "FLOAT64":
+		return 3
+	case "STRING":
+		return 4
+	default:
+		return 0
+	}
+}
+
 type NONE_TYPE struct{}
 
 type Value struct {
@@ -33,9 +48,15 @@ type Value struct {
 	valueNum    uint64
 }
 
+func GetNoneValue() Value {
+	return Value{
+		valueType: NONE,
+	}
+}
+
 func GetBoolValue(v bool) Value {
 	boolValue := 0
-	if v == true {
+	if v {
 		boolValue = 1
 	}
 	return Value{
@@ -119,4 +140,33 @@ func (v Value) MarshalJSON() ([]byte, error) {
 	jsonVal.Type = ValueTypeToString(v.Type())
 	jsonVal.Value = v.ToInterface()
 	return json.Marshal(jsonVal)
+}
+
+func (v *Value) UnmarshalJSON(data []byte) error {
+	var jsonVal struct {
+		Type  string
+		Value interface{}
+	}
+	err := json.Unmarshal(data, &jsonVal)
+	if err != nil {
+		return err
+	}
+	v.valueType = StringToValueType(jsonVal.Type)
+	switch v.valueType {
+	case BOOL:
+		if jsonVal.Value == true {
+			v.valueNum = 1
+		} else {
+			v.valueNum = 0
+		}
+	case INT64:
+		v.valueNum = uint64(jsonVal.Value.(float64))
+	case FLOAT64:
+		val := jsonVal.Value.(float64)
+		v.valueNum = math.Float64bits(val)
+	case STRING:
+		v.valueString = jsonVal.Value.(string)
+	default:
+	}
+	return err
 }
