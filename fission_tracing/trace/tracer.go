@@ -2,6 +2,7 @@ package trace
 
 import (
 	"context"
+	"encoding/json"
 	"sync/atomic"
 	"time"
 
@@ -103,10 +104,15 @@ func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
 	return newSpan
 }
 
-func (tr *Tracer) ExtractSpanContext() {
-
+func (tr *Tracer) ExtractSpanList() (string, bool) {
+	// spanList := make([]CommonSpan, len(tr.spanhandler.spanSeq))
+	output, err := json.Marshal(tr.spanhandler.spanSeq)
+	if err != nil {
+		return "", false
+	}
+	return string(output), true
 }
 
-func (tr *Tracer) InjectSpanContext() {
+func (tr *Tracer) InjectSpanList(spanList []string) {
 
 }

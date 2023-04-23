@@ -13,8 +13,8 @@ import (
 func TestRootStart(t *testing.T) {
 	initCtx := context.Background()
 	tr := trace.NewTracer("test")
-	nextCtx, span := tr.Start("Start", initCtx)
-	if span.Operatorname != "Start" {
+	nextCtx, span := tr.Start("Start-1", initCtx)
+	if span.Operatorname != "Start-1" {
 		t.Fatalf("span's Operatorname is wrong.")
 	}
 
@@ -44,15 +44,17 @@ func TestRootStart(t *testing.T) {
 	span.End()
 	t.Logf("start time is %v, end time is  %v.", span.StartTime(), span.EndTime())
 	sh := tr.GetSpanHandlerForTest()
+	//	sleep for 1 second and SpanHandler can receive the span sent by Child.
+	time.Sleep(1 * time.Second)
 	if sh.Len() != 1 {
-		t.Fatalf("wrong number in SpanHandler, it should be 1.")
+		t.Fatalf("wrong number in SpanHandler, it should be 1, but it is %d.", sh.Len())
 	}
 }
 
 func TestChildStart(t *testing.T) {
 	initCtx := context.Background()
 	tr := trace.NewTracer("test1")
-	nextCtx, span := tr.Start("Start", initCtx)
+	nextCtx, span := tr.Start("Start-2", initCtx)
 	childSpan := ChildDo(nextCtx)
 	time.Sleep(1 * time.Second)
 	span.End()
@@ -66,8 +68,8 @@ func TestChildStart(t *testing.T) {
 	if !childSpan.StartTime().After(span.StartTime()) || !span.EndTime().After(childSpan.EndTime()) {
 		t.Fatalf("wrong time in childSpan.")
 	}
-	n := tr.End()
-	t.Logf("number of span is %d", n)
+	// n := tr.End()
+	// t.Logf("number of span is %d", n)
 }
 
 func ChildDo(ctx context.Context) trace.CommonSpan {
@@ -84,4 +86,18 @@ func ChildDo(ctx context.Context) trace.CommonSpan {
 	*/
 	span.End()
 	return span
+}
+
+func TestTracerExtract(t *testing.T) {
+	initCtx := context.Background()
+	tr := trace.NewTracer("test3")
+	_, span := tr.Start("Start-3", initCtx)
+	span.End()
+	time.Sleep(1 * time.Second)
+	tr.End()
+	list, err := tr.ExtractSpanList()
+	if !err {
+		t.Fatalf("Extract SpanList failed.")
+	}
+	t.Logf("Span list is: %s", string(list))
 }
