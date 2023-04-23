@@ -60,7 +60,7 @@ type SpanContext struct {
 	remotelyCalled bool
 }
 
-var _ json.Marshaler = SpanContext{}
+// var _ json.Marshaler = SpanContext{}
 
 func (sc *SpanContext) InitWithParentSpanID(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
@@ -99,6 +99,16 @@ func (sc *SpanContext) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type CommonSpanInfo struct {
+	Operatorname            string
+	StartTime               time.Time
+	EndTime                 time.Time
+	TraceTag                *tag.TagDict
+	CommonSpanContext       SpanContext
+	CommonSpanParentContext SpanContext
+	ChildSpanCount          int
+}
+
 type CommonSpan struct {
 	Operatorname string
 
@@ -124,7 +134,6 @@ type CommonSpan struct {
 	childSpanCount int
 
 	spanHandler *SpanHandler
-	// tracer *Tracer
 }
 
 func NewSpan(name string) CommonSpan {
@@ -176,7 +185,12 @@ func (cs *CommonSpan) AddTag(key tag.Key, value tag.Value) {
 	cs.traceTag.Insert(key, value)
 }
 
-// func (cs *CommonSpan) ShowTag()
+func (cs *CommonSpan) GetTag(key tag.Key) (tag.Value, bool) {
+	if v, ok := cs.traceTag.Search(key); ok {
+		return v, true
+	}
+	return tag.GetNoneValue(), false
+}
 
 func (cs CommonSpan) backToTracer() {
 	cs.spanHandler.Enqueue(cs)
@@ -185,4 +199,32 @@ func (cs CommonSpan) backToTracer() {
 func (cs *CommonSpan) End() {
 	cs.endTime = GetEndTime(cs.StartTime())
 	cs.backToTracer()
+}
+
+func (cs CommonSpan) MarshalJSON() ([]byte, error) {
+	return json.Marshal(CommonSpanInfo{
+		Operatorname:            cs.Operatorname,
+		StartTime:               cs.startTime,
+		EndTime:                 cs.endTime,
+		TraceTag:                cs.traceTag,
+		CommonSpanContext:       cs.spanContext,
+		CommonSpanParentContext: cs.parentSpanContext,
+		ChildSpanCount:          cs.childSpanCount,
+	})
+}
+
+func (cs *CommonSpan) UnmarshalJSON(data []byte) error {
+	csi := CommonSpanInfo{}
+	err := json.Unmarshal(data, &csi)
+	if err != nil {
+		return err
+	}
+	cs.Operatorname = csi.Operatorname
+	cs.startTime = csi.StartTime
+	cs.endTime = csi.EndTime
+	cs.traceTag = csi.TraceTag
+	cs.spanContext = csi.CommonSpanContext
+	cs.parentSpanContext = csi.CommonSpanParentContext
+	cs.childSpanCount = csi.ChildSpanCount
+	return nil
 }
