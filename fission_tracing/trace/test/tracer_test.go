@@ -88,16 +88,25 @@ func ChildDo(ctx context.Context) trace.CommonSpan {
 	return span
 }
 
-func TestTracerExtract(t *testing.T) {
+func TestTracerExtractAndInject(t *testing.T) {
 	initCtx := context.Background()
 	tr := trace.NewTracer("test3")
 	_, span := tr.Start("Start-3", initCtx)
 	span.End()
 	time.Sleep(1 * time.Second)
 	tr.End()
+	//	Do Extract
 	list, err := tr.ExtractSpanList()
 	if !err {
 		t.Fatalf("Extract SpanList failed.")
 	}
 	t.Logf("Span list is: %s", string(list))
+	// Do Inject
+	prelength := tr.GetSpanHandlerForTest().Len()
+	tr.InjectSpanList(list)
+	afterlength := tr.GetSpanHandlerForTest().Len()
+	if afterlength != 2*prelength {
+		t.Fatalf("wrong length in spanHandler.")
+	}
+	t.Logf("before inject, length is %d; after inject, length is %d.", prelength, afterlength)
 }

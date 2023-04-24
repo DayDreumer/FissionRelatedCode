@@ -113,6 +113,12 @@ func (tr *Tracer) ExtractSpanList() (string, bool) {
 	return string(output), true
 }
 
-func (tr *Tracer) InjectSpanList(spanList []string) {
-
+func (tr *Tracer) InjectSpanList(spanList string) error {
+	recvSpanList := make([]CommonSpan, 10)
+	err := json.Unmarshal([]byte(spanList), &recvSpanList)
+	if err != nil {
+		return err
+	}
+	tr.spanhandler.spanSeq = append(tr.spanhandler.spanSeq, recvSpanList...)
+	return nil
 }
