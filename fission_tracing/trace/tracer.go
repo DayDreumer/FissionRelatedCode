@@ -62,9 +62,13 @@ func (tr *Tracer) Start(name string, ctx context.Context) (context.Context, Comm
 	return InheritParentContext(ctx, newSpan), newSpan
 }
 
-func (tr *Tracer) End() int {
+func (tr *Tracer) End() (int, string) {
 	tr.spanhandler.OnEnd()
-	return len(tr.spanhandler.spanSeq)
+	list, ok := tr.ExtractSpanList()
+	if !ok {
+		panic("extract SpanList error.")
+	}
+	return len(tr.spanhandler.spanSeq), list
 }
 
 func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
@@ -101,6 +105,7 @@ func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
 		spanHandler:       NewSpanHandler(),
 	}
 	newSpan.spanHandler = tr.spanhandler
+	go newSpan.spanHandler.HandlerJob()
 	return newSpan
 }
 

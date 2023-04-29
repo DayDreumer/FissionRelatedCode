@@ -93,7 +93,7 @@ func TestTracerExtractAndInject(t *testing.T) {
 	tr := trace.NewTracer("test3")
 	_, span := tr.Start("Start-3", initCtx)
 	span.End()
-	time.Sleep(1 * time.Second)
+	// time.Sleep(1 * time.Second)
 	tr.End()
 	//	Do Extract
 	list, err := tr.ExtractSpanList()
