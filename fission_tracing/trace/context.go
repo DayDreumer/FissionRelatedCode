@@ -1,6 +1,9 @@
 package trace
 
-import "context"
+import (
+	"context"
+	"encoding/json"
+)
 
 type contextKeyType int
 
@@ -33,4 +36,13 @@ func GetLastSpanContextFromContext(ctx context.Context) SpanContext {
 
 func GetInnerSpanForTest(ctx context.Context) CommonSpan {
 	return ctx.Value(spanKey).(CommonSpan)
+}
+
+func InheritContextFromCaller(parentSpanInfo string) context.Context {
+	var parentSpan CommonSpan
+	err := json.Unmarshal([]byte(parentSpanInfo), &parentSpan)
+	if err != nil {
+		panic(err)
+	}
+	return InheritParentContext(context.Background(), parentSpan)
 }
