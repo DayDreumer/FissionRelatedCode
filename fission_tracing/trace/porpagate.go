@@ -1,11 +1,15 @@
 package trace
 
-type ResultType interface {
-	GetStatus() int
-	GetResult() int
-}
-
 type UniResponse struct {
 	TraceInfo string
-	Result    ResultType
+	status    int
+	value     int
+}
+
+func (ur UniResponse) GetStatus() int {
+	return ur.status
+}
+
+func (ur UniResponse) GetValue() int {
+	return ur.value
 }
