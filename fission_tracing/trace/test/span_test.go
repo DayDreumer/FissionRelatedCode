@@ -9,6 +9,10 @@ import (
 	tag "fission.tracing/tag"
 )
 
+const (
+	timeFormart = "2006-01-02 15:04:05.000"
+)
+
 func TestSpanContextSerialization(t *testing.T) {
 	testParentID := trace.SpanID{}
 	testSpanContext := trace.SpanContext{}
@@ -67,10 +71,10 @@ func TestSpanSerialization(t *testing.T) {
 	if rsid, sid := recvSpan.SpanContext().SpanID(), testSpan.SpanContext().SpanID(); !bytes.Equal(rsid[:], sid[:]) {
 		t.Fatalf("receiver's SpanID is wrong, not equals to testSpan's SpanID.")
 	}
-	if !recvSpan.StartTime().Equal(testSpan.StartTime()) {
-		t.Fatalf("receiver's StartTime is wrong, not equals to testSpan's startTime.")
+	if recvSpan.StartTime().Format(timeFormart) != testSpan.StartTime().Format(timeFormart) {
+		t.Fatalf("receiver's StartTime is wrong, not equals to testSpan's startTime.recv is %v, test is %v", recvSpan.StartTime(), testSpan.StartTime())
 	}
-	if !recvSpan.EndTime().Equal(testSpan.EndTime()) {
+	if recvSpan.EndTime().Format(timeFormart) != testSpan.EndTime().Format(timeFormart) {
 		t.Fatalf("receiver's EndTime is wrong, not equals to testSpan's endTime.")
 	}
 	if v, ok := recvSpan.GetTag(keyArray[0]); ok {

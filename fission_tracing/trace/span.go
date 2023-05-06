@@ -9,6 +9,10 @@ import (
 	"fission.tracing/tag"
 )
 
+const (
+	timeFormart = "2006-01-02 15:04:05.000"
+)
+
 type TraceID [16]byte
 
 var noneTID TraceID
@@ -101,8 +105,8 @@ func (sc *SpanContext) UnmarshalJSON(data []byte) error {
 
 type CommonSpanInfo struct {
 	Operatorname            string
-	StartTime               time.Time
-	EndTime                 time.Time
+	StartTime               string
+	EndTime                 string
 	TraceTag                *tag.TagDict
 	CommonSpanContext       SpanContext
 	CommonSpanParentContext SpanContext
@@ -204,8 +208,8 @@ func (cs *CommonSpan) End() {
 func (cs CommonSpan) MarshalJSON() ([]byte, error) {
 	return json.Marshal(CommonSpanInfo{
 		Operatorname:            cs.Operatorname,
-		StartTime:               cs.startTime,
-		EndTime:                 cs.endTime,
+		StartTime:               string(cs.startTime.Format(timeFormart)),
+		EndTime:                 string(cs.endTime.Format(timeFormart)),
 		TraceTag:                cs.traceTag,
 		CommonSpanContext:       cs.spanContext,
 		CommonSpanParentContext: cs.parentSpanContext,
@@ -220,8 +224,8 @@ func (cs *CommonSpan) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	cs.Operatorname = csi.Operatorname
-	cs.startTime = csi.StartTime
-	cs.endTime = csi.EndTime
+	cs.startTime, _ = time.ParseInLocation(timeFormart, csi.StartTime, time.Local)
+	cs.endTime, _ = time.ParseInLocation(timeFormart, csi.EndTime, time.Local)
 	cs.traceTag = csi.TraceTag
 	cs.spanContext = csi.CommonSpanContext
 	cs.parentSpanContext = csi.CommonSpanParentContext
