@@ -10,6 +10,8 @@ import (
 )
 
 var (
+
+	// globalTracer	全局Tracer
 	globalTracer = defaultTracer()
 )
 
@@ -18,6 +20,10 @@ type Tracer struct {
 	spanhandler *SpanHandler
 }
 
+// NewTracer
+//
+//	@param name
+//	@return *Tracer
 func NewTracer(name string) *Tracer {
 	if globalTracer == nil {
 		return &Tracer{
@@ -33,6 +39,9 @@ func NewTracer(name string) *Tracer {
 	return gt
 }
 
+// defaultTracer
+//
+//	@return *atomic.Value
 func defaultTracer() *atomic.Value {
 	v := &atomic.Value{}
 	v.Store(&Tracer{
@@ -42,11 +51,21 @@ func defaultTracer() *atomic.Value {
 	return v
 }
 
+// GetSpanHandlerForTest
+//
+//	@receiver tr
+//	@return *SpanHandler
 func (tr *Tracer) GetSpanHandlerForTest() *SpanHandler {
 	return tr.spanhandler
 }
 
-// start a new span
+// Start start a new span
+//
+//	@receiver tr
+//	@param name
+//	@param ctx
+//	@return context.Context
+//	@return CommonSpan
 func (tr *Tracer) Start(name string, ctx context.Context) (context.Context, CommonSpan) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -71,6 +90,12 @@ func (tr *Tracer) End() (int, string) {
 	return len(tr.spanhandler.spanSeq), list
 }
 
+// getNewSpan
+//
+//	@receiver tr
+//	@param ctx
+//	@param name
+//	@return CommonSpan
 func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
 	//	get last SpanContext to inherit its traceID
 	var parentSC SpanContext = GetLastSpanContextFromContext(ctx)
@@ -109,6 +134,11 @@ func (tr *Tracer) getNewSpan(ctx context.Context, name string) CommonSpan {
 	return newSpan
 }
 
+// ExtractSpanList
+//
+//	@receiver tr
+//	@return string
+//	@return bool
 func (tr *Tracer) ExtractSpanList() (string, bool) {
 	// spanList := make([]CommonSpan, len(tr.spanhandler.spanSeq))
 	output, err := json.Marshal(tr.spanhandler.spanSeq)

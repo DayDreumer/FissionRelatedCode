@@ -9,12 +9,20 @@ import (
 	"sync"
 )
 
+// TraceidToString
+//
+//	@param traceID
+//	@return string
 func TraceidToString(traceID TraceID) string {
 	recv := make([]byte, 16)
 	recv = traceID[:]
 	return hex.EncodeToString(recv)
 }
 
+// SpanidToString
+//
+//	@param spanID
+//	@return string
 func SpanidToString(spanID SpanID) string {
 	recv := make([]byte, 8)
 	recv = spanID[:]
@@ -26,6 +34,9 @@ type RandomGenerator struct {
 	ran *rand.Rand
 }
 
+// NewRandomGenerator
+//
+//	@return RandomGenerator
 func NewRandomGenerator() RandomGenerator {
 	rg := RandomGenerator{}
 	var rgSeed int64
@@ -34,18 +45,31 @@ func NewRandomGenerator() RandomGenerator {
 	return rg
 }
 
+// generateTraceID
+//
+//	@receiver rg
+//	@return TraceID
 func (rg *RandomGenerator) generateTraceID() TraceID {
 	traceID := TraceID{}
 	_, _ = rg.ran.Read(traceID[:])
 	return traceID
 }
 
+// generateSpanID
+//
+//	@receiver rg
+//	@return SpanID
 func (rg *RandomGenerator) generateSpanID() SpanID {
 	spanID := SpanID{}
 	_, _ = rg.ran.Read(spanID[:])
 	return spanID
 }
 
+// generateID
+//
+//	@receiver rg
+//	@return TraceID
+//	@return SpanID
 func (rg *RandomGenerator) generateID() (TraceID, SpanID) {
 	return rg.generateTraceID(), rg.generateSpanID()
 }

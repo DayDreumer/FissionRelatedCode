@@ -17,10 +17,18 @@ type TraceID [16]byte
 
 var noneTID TraceID
 
+// Exist
+//
+//	@receiver t
+//	@return bool
 func (t TraceID) Exist() bool {
 	return !bytes.Equal(t[:], noneTID[:])
 }
 
+// String
+//
+//	@receiver t
+//	@return string
 func (t TraceID) String() string {
 	tid := make([]byte, 16)
 	tid = t[:]
@@ -31,10 +39,18 @@ type SpanID [8]byte
 
 var noneSID SpanID
 
+// Exist
+//
+//	@receiver s
+//	@return bool
 func (s SpanID) Exist() bool {
 	return !bytes.Equal(s[:], noneSID[:])
 }
 
+// String
+//
+//	@receiver s
+//	@return string
 func (s SpanID) String() string {
 	sid := make([]byte, 8)
 	sid = s[:]
@@ -48,6 +64,10 @@ type SpanContextInfo struct {
 	RemotelyCalled bool
 }
 
+// ConvertToSpanContext
+//
+//	@receiver sci
+//	@return SpanContext
 func (sci SpanContextInfo) ConvertToSpanContext() SpanContext {
 	return SpanContext{
 		traceID:        sci.TraceID,
@@ -64,8 +84,10 @@ type SpanContext struct {
 	remotelyCalled bool
 }
 
-// var _ json.Marshaler = SpanContext{}
-
+// InitWithParentSpanID
+//
+//	@receiver sc
+//	@param parentSpanID
 func (sc *SpanContext) InitWithParentSpanID(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		sc.parentSpanID = parentSpanID
@@ -76,14 +98,27 @@ func (sc *SpanContext) InitWithParentSpanID(parentSpanID SpanID) {
 
 }
 
+// TraceID
+//
+//	@receiver sc
+//	@return TraceID
 func (sc SpanContext) TraceID() TraceID {
 	return sc.traceID
 }
 
+// SpanID
+//
+//	@receiver sc
+//	@return SpanID
 func (sc SpanContext) SpanID() SpanID {
 	return sc.spanID
 }
 
+// MarshalJSON SpanContext自定义序列化
+//
+//	@receiver sc
+//	@return []byte
+//	@return error
 func (sc SpanContext) MarshalJSON() ([]byte, error) {
 	return json.Marshal(SpanContextInfo{
 		TraceID:        sc.traceID,
@@ -93,6 +128,11 @@ func (sc SpanContext) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON SpanContext自定义反序列化
+//
+//	@receiver sc
+//	@param data
+//	@return error
 func (sc *SpanContext) UnmarshalJSON(data []byte) error {
 	sci := SpanContextInfo{}
 	json.Unmarshal(data, &sci)
@@ -140,6 +180,10 @@ type CommonSpan struct {
 	spanHandler *SpanHandler
 }
 
+// NewSpan
+//
+//	@param name
+//	@return CommonSpan
 func NewSpan(name string) CommonSpan {
 	return CommonSpan{
 		Operatorname:   name,
@@ -150,18 +194,33 @@ func NewSpan(name string) CommonSpan {
 	}
 }
 
+// NewSpanWithSpanContext
+//
+//	@param name
+//	@param sc
+//	@return CommonSpan
 func NewSpanWithSpanContext(name string, sc SpanContext) CommonSpan {
 	cs := NewSpan(name)
 	cs.spanContext = sc
 	return cs
 }
 
+// NewSpanWithMultiContext
+//
+//	@param name
+//	@param sc
+//	@param psc
+//	@return CommonSpan
 func NewSpanWithMultiContext(name string, sc SpanContext, psc SpanContext) CommonSpan {
 	cs := NewSpanWithSpanContext(name, sc)
 	cs.parentSpanContext = psc
 	return cs
 }
 
+// initSpanContext
+//
+//	@receiver cs
+//	@param parentSpanID
 func (cs *CommonSpan) initSpanContext(parentSpanID SpanID) {
 	if parentSpanID != (SpanID{}) {
 		cs.spanContext.parentSpanID = parentSpanID
@@ -169,6 +228,10 @@ func (cs *CommonSpan) initSpanContext(parentSpanID SpanID) {
 
 }
 
+// StartTime
+//
+//	@receiver cs
+//	@return time.Time
 func (cs *CommonSpan) StartTime() time.Time {
 	return cs.startTime
 }
@@ -177,18 +240,37 @@ func (cs *CommonSpan) EndTime() time.Time {
 	return cs.endTime
 }
 
+// SpanContext
+//
+//	@receiver cs
+//	@return SpanContext
 func (cs *CommonSpan) SpanContext() SpanContext {
 	return cs.spanContext
 }
 
+// ParentSpanContext
+//
+//	@receiver cs
+//	@return SpanContext
 func (cs *CommonSpan) ParentSpanContext() SpanContext {
 	return cs.parentSpanContext
 }
 
+// AddTag
+//
+//	@receiver cs
+//	@param key
+//	@param value
 func (cs *CommonSpan) AddTag(key tag.Key, value tag.Value) {
 	cs.traceTag.Insert(key, value)
 }
 
+// GetTag
+//
+//	@receiver cs
+//	@param key
+//	@return tag.Value
+//	@return bool
 func (cs *CommonSpan) GetTag(key tag.Key) (tag.Value, bool) {
 	if v, ok := cs.traceTag.Search(key); ok {
 		return v, true
@@ -196,15 +278,26 @@ func (cs *CommonSpan) GetTag(key tag.Key) (tag.Value, bool) {
 	return tag.GetNoneValue(), false
 }
 
+// backToTracer
+//
+//	@receiver cs
 func (cs CommonSpan) backToTracer() {
 	cs.spanHandler.Enqueue(cs)
 }
 
+// End
+//
+//	@receiver cs
 func (cs *CommonSpan) End() {
 	cs.endTime = GetEndTime(cs.StartTime())
 	cs.backToTracer()
 }
 
+// MarshalJSON CommonSpan自定义序列化
+//
+//	@receiver cs
+//	@return []byte
+//	@return error
 func (cs CommonSpan) MarshalJSON() ([]byte, error) {
 	return json.Marshal(CommonSpanInfo{
 		Operatorname:            cs.Operatorname,
@@ -217,6 +310,11 @@ func (cs CommonSpan) MarshalJSON() ([]byte, error) {
 	})
 }
 
+// UnmarshalJSON CommonSpan自定义反序列化
+//
+//	@receiver cs
+//	@param data
+//	@return error
 func (cs *CommonSpan) UnmarshalJSON(data []byte) error {
 	csi := CommonSpanInfo{}
 	err := json.Unmarshal(data, &csi)

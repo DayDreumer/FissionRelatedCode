@@ -10,6 +10,8 @@ type SpanHandler struct {
 	stopCh  chan struct{}
 }
 
+// NewSpanHandler
+//  @return *SpanHandler
 func NewSpanHandler() *SpanHandler {
 	sp := &SpanHandler{
 		queue:   make(chan CommonSpan, 10),
@@ -20,6 +22,8 @@ func NewSpanHandler() *SpanHandler {
 	return sp
 }
 
+// OnEnd
+//  @receiver sh
 func (sh *SpanHandler) OnEnd() {
 	if sh.stopCh == nil {
 		panic("error: SpanHandler is nil.")
@@ -29,6 +33,8 @@ func (sh *SpanHandler) OnEnd() {
 	sh.stopCh = nil
 }
 
+// HandlerJob
+//  @receiver sh
 func (sh *SpanHandler) HandlerJob() {
 	sh.sw.Add(1)
 	for {
@@ -45,6 +51,10 @@ func (sh *SpanHandler) HandlerJob() {
 	}
 }
 
+// Enqueue
+//  @receiver sh
+//  @param cs
+//  @return bool
 func (sh *SpanHandler) Enqueue(cs CommonSpan) bool {
 	select {
 	case <-sh.stopCh:
@@ -55,6 +65,9 @@ func (sh *SpanHandler) Enqueue(cs CommonSpan) bool {
 	return true
 }
 
+// Len
+//  @receiver sh
+//  @return int
 func (sh *SpanHandler) Len() int {
 	sh.mu.Lock()
 	defer sh.mu.Unlock()
